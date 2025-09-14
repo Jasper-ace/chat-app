@@ -1,0 +1,114 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'chat_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  String _userType = "homeowner"; // default
+
+  Future<void> login() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Email and password are required")),
+      );
+      return;
+    }
+
+    final url = Uri.parse("http://192.168.1.6:8000/api/${_userType}s/login");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"email": email, "password": password}),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final token = data['data']['token'];
+        final user = data['data']['user'];
+        final userId = user['id'];
+
+        // Handle name for both Tradies & Homeowners
+        final userName = user['name'] ??
+            "${user['first_name'] ?? ''} ${user['last_name'] ?? ''}".trim();
+
+        // Save to prefs
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('authToken', token);
+        await prefs.setInt('userId', userId);
+        await prefs.setString('userType', _userType);
+        await prefs.setString('userName', userName.isNotEmpty ? userName : "Unknown");
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              receiverId: 1, // 👈 later you’ll make this dynamic
+              receiverType: _userType == "homeowner" ? "Tradie" : "Homeowner",
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? "Login failed")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Login")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: "Email"),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: "Password"),
+              obscureText: true,
+            ),
+            DropdownButton<String>(
+              value: _userType,
+              items: const [
+                DropdownMenuItem(value: "homeowner", child: Text("Homeowner")),
+                DropdownMenuItem(value: "tradie", child: Text("Tradie")),
+              ],
+              onChanged: (val) {
+                setState(() {
+                  _userType = val!;
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(onPressed: login, child: const Text("Login")),
+          ],
+        ),
+      ),
+    );
+  }
+}

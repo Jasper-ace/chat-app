@@ -23,6 +23,9 @@ dependencies:
   # Socket.IO client for real-time chat
   socket_io_client: ^2.0.0
 
+  # Local storage for login/session persistence
+  shared_preferences: ^2.2.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

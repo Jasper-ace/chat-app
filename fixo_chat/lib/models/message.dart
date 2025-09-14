@@ -2,17 +2,15 @@ class Message {
   final int id;
   final int senderId;
   final int receiverId;
+  final String senderName;
   final String message;
-  final bool isRead;
-  final DateTime createdAt;
 
   Message({
     required this.id,
     required this.senderId,
     required this.receiverId,
+    required this.senderName,
     required this.message,
-    required this.isRead,
-    required this.createdAt,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -20,9 +18,8 @@ class Message {
       id: json['id'],
       senderId: json['sender_id'],
       receiverId: json['receiver_id'],
+      senderName: json['sender_name'] ?? '',
       message: json['message'],
-      isRead: json['is_read'] == 1,
-      createdAt: DateTime.parse(json['created_at']),
     );
   }
 }

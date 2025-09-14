@@ -1,27 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'providers/chat_provider.dart';
 import 'screens/login_screen.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const FixoChatApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class FixoChatApp extends StatelessWidget {
+  const FixoChatApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Fixo Chat',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      title: 'Fixo Chat-App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: Colors.deepPurple,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
       home: const LoginScreen(),
     );
   }
